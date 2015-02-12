@@ -73,18 +73,18 @@ function infinity() {
 
 
 /**
- * The HpyerionGraph implements time based graph model proposed by
+ * The HyperionGraph implements time based graph model proposed by
  * http://www.neo4j.org/graphgist?608bf0701e3306a23e77.
  *
  * @param neo4jDb
  * @constructor
  */
-var HpyerionGraph = function(neo4jDb) {
+var HyperionGraph = function(neo4jDb) {
 	this._db = neo4jDb;
 	this._useTransactions = true;  // TODO expose in future :)
 };
 
-HpyerionGraph.prototype.insertNode = function(id, label, data) {
+HyperionGraph.prototype.insertNode = function(id, label, data) {
 	var nodeLabel = label
 		, stateNodeLabel = nodeLabel + 'State'
 		, statements = [{
@@ -102,7 +102,7 @@ HpyerionGraph.prototype.insertNode = function(id, label, data) {
 	return executeStatements.call(this, statements);
 };
 
-HpyerionGraph.prototype.updateNode = function(id, label, data) {
+HyperionGraph.prototype.updateNode = function(id, label, data) {
 	var nodeLabel = label
 		, stateNodeLabel = nodeLabel + 'State'
 		, statements = [{

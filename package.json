@@ -19,7 +19,9 @@
   },
   "homepage": "https://github.com/swissmanu/hyperion-graph",
   "dependencies": {
-    "node-neo4j": "^2.0.3",
     "q": "^1.1.2"
+  },
+  "peerDependencies": {
+    "node-neo4j": "^2.0.3"
   }
 }
