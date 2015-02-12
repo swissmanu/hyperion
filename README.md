@@ -1,4 +1,5 @@
 # hyperion-graph
+[![npm version](https://badge.fury.io/js/hyperion-graph.svg)](http://badge.fury.io/js/hyperion-graph)
 
 `hyperion-graph` is a wrapper around [`node-neo4j`](https://github.com/philippkueng/node-neo4j) and allows to create and modify history aware, time based [`Neo4j`](http://neo4j.com/) graphs as described in http://www.neo4j.org/graphgist?608bf0701e3306a23e77.
 
@@ -15,7 +16,7 @@ var Neo4j = require('node-neo4j')
 	, Hyprion = require('hyperion-graph')
 	, db = new Neo4j('http://localhost:7474')
 	, adapter = new Hyperion(db);
-	
+
 adapter.insertNode(1701, 'Spaceship', {
 		brand: 'Starfleet'
 	}).catch(function(err) {
