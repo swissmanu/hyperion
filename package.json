@@ -1,6 +1,6 @@
 {
   "name": "hyperion-graph",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A wrapper for node-neo4j for keeping a history of graph changes.",
   "main": "index.js",
   "repository": {
