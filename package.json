@@ -1,0 +1,25 @@
+{
+  "name": "hyperion-graph",
+  "version": "0.0.1",
+  "description": "A wrapper for node-neo4j for keeping a history of graph changes.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/swissmanu/hyperion-graph"
+  },
+  "keywords": [
+    "neo4j",
+    "history",
+    "graph"
+  ],
+  "author": "Manuel Alabor <manuel@alabor.me>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/swissmanu/hyperion-graph/issues"
+  },
+  "homepage": "https://github.com/swissmanu/hyperion-graph",
+  "dependencies": {
+    "node-neo4j": "^2.0.3",
+    "q": "^1.1.2"
+  }
+}
