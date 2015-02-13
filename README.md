@@ -30,6 +30,9 @@ adapter.updateNode(1701, 'Spaceship', {
 	});
 ```
 
+## Tests
+Run the modules test using the `npm test` shell command.
+
 ## License
 Copyright (c) 2015 Manuel Alabor
 

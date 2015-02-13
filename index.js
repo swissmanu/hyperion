@@ -1,13 +1,87 @@
 var q = require('q');
 
 /**
+ * The HyperionGraph implements time based graph model proposed by
+ * http://www.neo4j.org/graphgist?608bf0701e3306a23e77.
+ *
+ * @param neo4jDb
+ * @constructor
+ */
+var HyperionGraph = function(neo4jDb, useTransactions) {
+	if(useTransactions !== true && useTransactions !== false) {
+		useTransactions = true;
+	}
+
+	this._db = neo4jDb;
+	this._useTransactions = useTransactions;
+};
+
+HyperionGraph.prototype.insertNode = function(id, label, data) {
+	var nodeLabel = label
+		, stateNodeLabel = nodeLabel + 'State'
+		, statements = [{
+			statement: 'CREATE (node:`' + nodeLabel + '`{nodeProps})-[:STATE{stateRelationshipProps}]->(state:`' + stateNodeLabel + '`{stateNodeProps})'
+				, parameters: {
+					nodeProps: { id: id }
+					, stateRelationshipProps: {
+						from: this.time.now()
+						, to: this.time.infinity()
+					}
+					, stateNodeProps: data
+				}
+			}];
+
+	return this.executeStatements(statements);
+};
+
+HyperionGraph.prototype.updateNode = function(id, label, data) {
+	var nodeLabel = label
+		, stateNodeLabel = nodeLabel + 'State'
+		, statements = [{
+			statement:	'MATCH (node:`' + nodeLabel + '`{id: {existingNodeProps}.id})-[currentStateRelationship:STATE{to: {stateRelationshipProps}.currentTo}]->(currentState:`' + stateNodeLabel + '`) SET currentStateRelationship.to = {stateRelationshipProps}.newTo ' +
+						'CREATE (node)-[newStateRelationship:STATE{from:{stateRelationshipProps}.newTo, to:{stateRelationshipProps}.currentTo}]->(newState:`' + stateNodeLabel + '`) SET newState = currentState SET newState += {newStateProps}'
+			, parameters: {
+				existingNodeProps: { id: id }
+				, stateRelationshipProps: {
+					currentTo: this.time.infinity()
+					, newTo: this.time.now()
+				}
+				, newStateProps: data
+			}
+		}];
+
+	return this.executeStatements(statements);
+};
+
+HyperionGraph.prototype.time = {
+	/**
+	 * Returns the current time in milliseconds.
+	 *
+	 * @returns {number}
+	 */
+	now: function() {
+		return new Date().getTime();
+	}
+
+	/**
+	 * Returns the MAX_SAFE_INTEGER. This can be used to indicate that an object is valid until "the end of time".
+	 *
+	 * @returns {number}
+	 * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
+	 */
+	, infinity: function() {
+		return 9007199254740991;
+	}
+};
+
+/**
  * Executes an array of cypher queries in a transaction. In case of an error, the transaction gets rolled back
  * automatically.
  *
  * @param statements
  * @returns {*}
  */
-function executeStatementsInTransaction(statements) {
+HyperionGraph.prototype.executeStatementsInTransaction = function(statements) {
 	var self = this
 		, transactionId;
 
@@ -27,7 +101,7 @@ function executeStatementsInTransaction(statements) {
 			}
 			throw err;
 		});
-}
+};
 
 /**
  * Executes an array of cypher queries serially, one after another. See executeStatementsInTransaction for a more
@@ -36,7 +110,7 @@ function executeStatementsInTransaction(statements) {
  * @param statements
  * @returns {*}
  */
-function executeStatementsSerially(statements) {
+HyperionGraph.prototype.executeStatementsSerially = function(statements) {
 	var self = this;
 
 	statements = statements.map(function(statement) {
@@ -44,7 +118,7 @@ function executeStatementsSerially(statements) {
 	});
 
 	return statements.reduce(q.when, q());
-}
+};
 
 /**
  * Executes given list of cypher queries. Checks further if queries should be executed as a transaction or just plain
@@ -53,73 +127,12 @@ function executeStatementsSerially(statements) {
  * @param statements
  * @returns {*}
  */
-function executeStatements(statements) {
+HyperionGraph.prototype.executeStatements = function(statements) {
 	if(this._useTransactions && statements.length > 1) {
 		return executeStatementsInTransaction.call(this, statements);
 	} else {
 		return executeStatementsSerially.call(this, statements);
 	}
-}
-
-function now() {
-	return new Date().getTime();
-}
-
-function infinity() {
-	// MAX_SAFE_INTEGER:
-	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER
-	return 9007199254740991;
-}
-
-
-/**
- * The HyperionGraph implements time based graph model proposed by
- * http://www.neo4j.org/graphgist?608bf0701e3306a23e77.
- *
- * @param neo4jDb
- * @constructor
- */
-var HyperionGraph = function(neo4jDb) {
-	this._db = neo4jDb;
-	this._useTransactions = true;  // TODO expose in future :)
 };
-
-HyperionGraph.prototype.insertNode = function(id, label, data) {
-	var nodeLabel = label
-		, stateNodeLabel = nodeLabel + 'State'
-		, statements = [{
-			statement: 'CREATE (node:`' + nodeLabel + '`{nodeProps})-[:STATE{stateRelationshipProps}]->(state:`' + stateNodeLabel + '`{stateNodeProps})'
-				, parameters: {
-					nodeProps: { id: id }
-					, stateRelationshipProps: {
-						from: now()
-						, to: infinity()
-					}
-					, stateNodeProps: data
-				}
-			}];
-
-	return executeStatements.call(this, statements);
-};
-
-HyperionGraph.prototype.updateNode = function(id, label, data) {
-	var nodeLabel = label
-		, stateNodeLabel = nodeLabel + 'State'
-		, statements = [{
-			statement:	'MATCH (node:`' + nodeLabel + '`{id: {existingNodeProps}.id})-[currentStateRelationship:STATE{to: {stateRelationshipProps}.currentTo}]->(currentState:`' + stateNodeLabel + '`) SET currentStateRelationship.to = {stateRelationshipProps}.newTo ' +
-						'CREATE (node)-[newStateRelationship:STATE{from:{stateRelationshipProps}.newTo, to:{stateRelationshipProps}.currentTo}]->(newState:`' + stateNodeLabel + '`) SET newState = currentState SET newState += {newStateProps}'
-			, parameters: {
-				existingNodeProps: { id: id }
-				, stateRelationshipProps: {
-					currentTo: infinity()
-					, newTo: now()
-				}
-				, newStateProps: data
-			}
-		}];
-
-	return executeStatements.call(this, statements);
-};
-
 
 module.exports = HyperionGraph;

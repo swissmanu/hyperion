@@ -1,11 +1,14 @@
 {
   "name": "hyperion-graph",
-  "version": "0.0.3",
+  "version": "0.0.2",
   "description": "A wrapper for node-neo4j for keeping a history of graph changes.",
   "main": "index.js",
   "repository": {
     "type": "git",
     "url": "https://github.com/swissmanu/hyperion-graph"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/jasmine-node ./test"
   },
   "keywords": [
     "neo4j",
