@@ -107,7 +107,7 @@ HyperionGraph.prototype.updateNode = function(id, label, data) {
 		, stateNodeLabel = nodeLabel + 'State'
 		, statements = [{
 			statement:	'MATCH (node:`' + nodeLabel + '`{id: {existingNodeProps}.id})-[currentStateRelationship:STATE{to: {stateRelationshipProps}.currentTo}]->(currentState:`' + stateNodeLabel + '`) SET currentStateRelationship.to = {stateRelationshipProps}.newTo ' +
-						'CREATE (node)-[newStateRelationship:STATE{from:{stateRelationshipProps}.newTo, to:{stateRelationshipProps}.currentTo}]->(newState:`' + stateNodeLabel + '`{newStateProps})'
+						'CREATE (node)-[newStateRelationship:STATE{from:{stateRelationshipProps}.newTo, to:{stateRelationshipProps}.currentTo}]->(newState:`' + stateNodeLabel + '`) SET newState = currentState SET newState += {newStateProps}'
 			, parameters: {
 				existingNodeProps: { id: id }
 				, stateRelationshipProps: {
