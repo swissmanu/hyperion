@@ -3,7 +3,7 @@ var HyperionGraph = require('../');
 describe('HyperionGraph', function() {
 
 	beforeEach(function() {
-		this.db = require('./mocks/node-neo4j');
+		this.db = new require('./mocks/node-neo4j');
 	});
 
 	describe('Constructor', function () {
@@ -63,4 +63,70 @@ describe('HyperionGraph', function() {
 			});
 		});
 	});
+
+
+	describe('executeStatements()', function() {
+		beforeEach(function() {
+			this.statements = [{ mighty: true }, { name: 'yoda' }];
+		});
+
+		describe('having transactions turned off', function() {
+			beforeEach(function() {
+				this.hyperion = new HyperionGraph(this.db, false);
+				spyOn(this.hyperion, 'executeStatementsSerially');
+			});
+
+			it('should call executeStatementsSerially()', function() {
+				this.hyperion.executeStatements(this.statements);
+				expect(this.hyperion.executeStatementsSerially).toHaveBeenCalledWith(this.statements);
+			});
+
+			it('should return executeStatementsSerially()s return value', function () {
+				this.hyperion.executeStatementsSerially.andReturn('luke');
+				expect(this.hyperion.executeStatements(this.statements)).toEqual('luke');
+			});
+		});
+
+		describe('having transactions turned on', function() {
+			beforeEach(function() {
+				this.hyperion = new HyperionGraph(this.db, true);
+				spyOn(this.hyperion, 'executeStatementsInTransaction');
+			});
+
+			it('should call executeStatementsInTransaction()', function() {
+				this.hyperion.executeStatements(this.statements);
+				expect(this.hyperion.executeStatementsInTransaction).toHaveBeenCalledWith(this.statements);
+			});
+
+			it('should return executeStatementsInTransaction()s return value', function () {
+				this.hyperion.executeStatementsInTransaction.andReturn('vader');
+				expect(this.hyperion.executeStatements(this.statements)).toEqual('vader');
+			});
+		});
+	});
+
+
+	/*
+	describe('executeStatementsSerially()', function() {
+		it('should pass given statements to the node-neo4j\'s cypherQuery() function in present order', function(done) {
+			var statements = [
+				{ statement: '1', parameters: {} }
+				, { statement: '2', parameters: {} }
+				, { statement: '3', parameters: {} }
+			];
+
+			this.hyperion = new HyperionGraph(this.db);
+
+			this.hyperion.executeStatementsSerially(statements)
+				.then(function() {
+					console.log('ok');
+					done();
+				})
+				.catch(function(err) {
+					console.log(err);
+					throw err;
+				});
+		});
+	});
+	*/
 });

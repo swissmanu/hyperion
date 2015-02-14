@@ -128,10 +128,10 @@ HyperionGraph.prototype.executeStatementsSerially = function(statements) {
  * @returns {*}
  */
 HyperionGraph.prototype.executeStatements = function(statements) {
-	if(this._useTransactions && statements.length > 1) {
-		return executeStatementsInTransaction.call(this, statements);
+	if(this._useTransactions) {
+		return this.executeStatementsInTransaction(statements);
 	} else {
-		return executeStatementsSerially.call(this, statements);
+		return this.executeStatementsSerially(statements);
 	}
 };
 
