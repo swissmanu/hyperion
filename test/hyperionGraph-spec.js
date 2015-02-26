@@ -106,6 +106,127 @@ describe('HyperionGraph', function() {
 		});
 	});
 
+	describe('executeStatementsInTransaction()', function() {
+		beforeEach(function() {
+			this.hyperion = new HyperionGraph(this.db);
+		});
+
+		it('should call beginTransaction(), addStatementsToTransaction() and commitTransaction() in that order on node-neo4j', function(done) {
+			var self = this;
+
+			self.hyperion.executeStatementsInTransaction([])
+				.then(function() {
+					expect(self.db.recordedCalls.length).toBe(3);
+					expect(self.db.recordedCalls[0].name).toBe('beginTransaction');
+					expect(self.db.recordedCalls[1].name).toBe('addStatementsToTransaction');
+					expect(self.db.recordedCalls[2].name).toBe('commitTransaction');
+					done();
+				});
+		});
+
+		it('should not call rollbackTransaction() if beginTransaction() failed (because no transactionId is available then)', function(done) {
+			var self = this;
+
+			self.db.letBeginTransactionFail = true;
+			self.hyperion.executeStatementsInTransaction([])
+				.catch(function() {
+					expect(self.db.recordedCalls.length).toBe(1);
+					expect(self.db.recordedCalls[0].name).toBe('beginTransaction');
+					done();
+				});
+		});
+
+		it('should call rollbackTransaction() if addStatementsToTransaction() failed', function(done) {
+			var self = this;
+
+			self.db.letAddStatementsToTransactionFail = true;
+			self.hyperion.executeStatementsInTransaction([])
+				.catch(function() {
+					expect(self.db.recordedCalls.length).toBe(3);
+					expect(self.db.recordedCalls[0].name).toBe('beginTransaction');
+					expect(self.db.recordedCalls[1].name).toBe('addStatementsToTransaction');
+					expect(self.db.recordedCalls[2].name).toBe('rollbackTransaction');
+					done();
+				});
+		});
+
+		it('should call rollbackTransaction() if commitTransaction() failed', function(done) {
+			var self = this;
+
+			self.db.letCommitTransactionFail = true;
+			self.hyperion.executeStatementsInTransaction([])
+				.catch(function() {
+					expect(self.db.recordedCalls.length).toBe(4);
+					expect(self.db.recordedCalls[0].name).toBe('beginTransaction');
+					expect(self.db.recordedCalls[1].name).toBe('addStatementsToTransaction');
+					expect(self.db.recordedCalls[2].name).toBe('commitTransaction');
+					expect(self.db.recordedCalls[3].name).toBe('rollbackTransaction');
+					done();
+				});
+		});
+
+		describe('passes transactionId issued by beginTransaction()', function() {
+			it('to addStatementsToTransaction()', function(done) {
+				var self = this;
+
+				self.hyperion.executeStatementsInTransaction([])
+					.then(function() {
+						expect(self.db.recordedCalls[1].arguments).toEqual([
+							self.db.transactionId
+							, jasmine.any(Object)
+							, jasmine.any(Function)
+						]);
+						done();
+					});
+			});
+
+			it('to commitTransaction()', function(done) {
+				var self = this;
+
+				self.hyperion.executeStatementsInTransaction([])
+					.then(function() {
+						expect(self.db.recordedCalls[2].arguments).toEqual([
+							self.db.transactionId
+							, jasmine.any(Function)
+						]);
+						done();
+					});
+			});
+
+			it('to rollbackTransaction()', function(done) {
+				var self = this;
+
+				self.db.letAddStatementsToTransactionFail = true;
+				self.hyperion.executeStatementsInTransaction([])
+					.catch(function(e) {
+						expect(self.db.recordedCalls[2].arguments).toEqual([
+							self.db.transactionId
+							, jasmine.any(Function)
+						]);
+						done();
+					});
+			});
+
+			it('should pass given statements to addStatementsToTransaction()', function(done) {
+				var self = this
+					, statements = [1,2,3];
+
+				self.hyperion.executeStatementsInTransaction(statements)
+					.then(function(e) {
+						expect(self.db.recordedCalls[1].arguments).toEqual([
+							self.db.transactionId
+							, {
+								statements: statements
+							}
+							, jasmine.any(Function)
+						]);
+						done();
+					});
+			});
+		});
+
+	});
+
 	describe('executeStatementsSerially()', function() {
 		it('should pass given statements to the node-neo4j\'s cypherQuery() function in present order', function(done) {
 			var self = this
