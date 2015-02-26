@@ -3,7 +3,8 @@ var HyperionGraph = require('../');
 describe('HyperionGraph', function() {
 
 	beforeEach(function() {
-		this.db = new require('./mocks/node-neo4j');
+		var MockedNeo4j = require('./mocks/node-neo4j');
+		this.db = new MockedNeo4j();
 	});
 
 	describe('Constructor', function () {
@@ -82,7 +83,7 @@ describe('HyperionGraph', function() {
 			});
 
 			it('should return executeStatementsSerially()s return value', function () {
-				this.hyperion.executeStatementsSerially.andReturn('luke');
+				this.hyperion.executeStatementsSerially.and.returnValue('luke');
 				expect(this.hyperion.executeStatements(this.statements)).toEqual('luke');
 			});
 		});
@@ -99,34 +100,33 @@ describe('HyperionGraph', function() {
 			});
 
 			it('should return executeStatementsInTransaction()s return value', function () {
-				this.hyperion.executeStatementsInTransaction.andReturn('vader');
+				this.hyperion.executeStatementsInTransaction.and.returnValue('vader');
 				expect(this.hyperion.executeStatements(this.statements)).toEqual('vader');
 			});
 		});
 	});
 
-
-	/*
 	describe('executeStatementsSerially()', function() {
 		it('should pass given statements to the node-neo4j\'s cypherQuery() function in present order', function(done) {
-			var statements = [
-				{ statement: '1', parameters: {} }
-				, { statement: '2', parameters: {} }
-				, { statement: '3', parameters: {} }
-			];
+			var self = this
+				, statements = [
+					{ statement: '1', parameters: { one: true } }
+					, { statement: '2', parameters: { two: true } }
+					, { statement: '3', parameters: { three: true } }
+				];
 
-			this.hyperion = new HyperionGraph(this.db);
+			self.hyperion = new HyperionGraph(self.db);
 
-			this.hyperion.executeStatementsSerially(statements)
+			self.hyperion.executeStatementsSerially(statements)
 				.then(function() {
-					console.log('ok');
+					expect(self.db.cypherQuery.calls.count()).toBe(3);
+					expect(self.db.cypherQuery.calls.allArgs()).toEqual([
+						[ statements[0].statement, statements[0].parameters, jasmine.any(Function) ]
+						, [ statements[1].statement, statements[1].parameters, jasmine.any(Function) ]
+						, [ statements[2].statement, statements[2].parameters, jasmine.any(Function) ]
+					])
 					done();
-				})
-				.catch(function(err) {
-					console.log(err);
-					throw err;
 				});
 		});
 	});
-	*/
 });

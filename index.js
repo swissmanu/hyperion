@@ -114,7 +114,19 @@ HyperionGraph.prototype.executeStatementsSerially = function(statements) {
 	var self = this;
 
 	statements = statements.map(function(statement) {
-		return q.nbind(self._db.cypherQuery, self._db, statement.statement, statement.parameters);
+		return function() {
+			var deferred = q.defer();
+
+			self._db.cypherQuery(statement.statement, statement.parameters, function(err, value) {
+				if(err) {
+					deferred.reject(err);
+				} else {
+					deferred.resolve(value);
+				}
+			});
+
+			return deferred.promise;
+		};
 	});
 
 	return statements.reduce(q.when, q());

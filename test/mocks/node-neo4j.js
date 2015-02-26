@@ -1,12 +1,13 @@
-module.exports = {
-	lastDelay: 300
-	, cypherQuery: function(statement, parameters, callback) {
-		this.lastDelay -= 50;
-
-		console.log('called', statement, parameters);
+function neo4jMock() {
+	this.cypherQuery = function cypherQuery(statement, parameters, callback) {
+		var delay = Math.floor((Math.random() * 500) + 100);
 
 		setTimeout(function() {
-			callback();
-		}, this.lastDelay);
-	}
-};
+			callback(null, {});
+		}, delay);
+	};
+
+	spyOn(this, 'cypherQuery').and.callThrough();
+}
+
+module.exports = neo4jMock;
