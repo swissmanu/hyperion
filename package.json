@@ -26,5 +26,8 @@
   },
   "peerDependencies": {
     "node-neo4j": "^2.0.3"
+  },
+  "devDependencies": {
+    "jasmine-node": "^2.0.0-beta3"
   }
 }
