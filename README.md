@@ -1,5 +1,5 @@
 # hyperion-graph
-[![npm version](https://badge.fury.io/js/hyperion-graph.svg)](http://badge.fury.io/js/hyperion-graph) [![Build Status](https://travis-ci.org/swissmanu/hyperion-graph.svg)](https://travis-ci.org/swissmanu/hyperion-graph)
+[![npm version](https://badge.fury.io/js/hyperion-graph.svg)](http://badge.fury.io/js/hyperion-graph) [![Build Status](https://travis-ci.org/swissmanu/hyperion-graph.svg)](https://travis-ci.org/swissmanu/hyperion-graph) [![Coverage Status](https://coveralls.io/repos/swissmanu/hyperion-graph/badge.svg)](https://coveralls.io/r/swissmanu/hyperion-graph)
 
 `hyperion-graph` is a wrapper around [`node-neo4j`](https://github.com/philippkueng/node-neo4j) and allows to create and modify history aware, time based [`Neo4j`](http://neo4j.com/) graphs as described in http://www.neo4j.org/graphgist?608bf0701e3306a23e77.
 
