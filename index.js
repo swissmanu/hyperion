@@ -1,4 +1,5 @@
-var q = require('q');
+var q = require('q')
+	, isUndefined = require('amp-is-undefined');
 
 /**
  * The HyperionGraph implements time based graph model proposed by
@@ -16,7 +17,17 @@ var HyperionGraph = function(neo4jDb, useTransactions) {
 	this._useTransactions = useTransactions;
 };
 
-HyperionGraph.prototype.insertNode = function(id, label, data) {
+/**
+ * @param id
+ * @param label
+ * @param state
+ * @returns {q.promise} 
+ */
+HyperionGraph.prototype.insertNodeWithState = function(id, label, state) {
+	if(isUndefined(id)) { throw new Error('no id given'); }
+	if(isUndefined(label)) { throw new Error('no label given'); }
+	if(isUndefined(state)) { throw new Error('no state given'); }
+
 	var nodeLabel = label
 		, stateNodeLabel = nodeLabel + 'State'
 		, statements = [{
@@ -27,14 +38,24 @@ HyperionGraph.prototype.insertNode = function(id, label, data) {
 						from: this.time.now()
 						, to: this.time.infinity()
 					}
-					, stateNodeProps: data
+					, stateNodeProps: state
 				}
 			}];
 
 	return this.executeStatements(statements);
 };
 
-HyperionGraph.prototype.updateNode = function(id, label, data) {
+/**
+ * @param id
+ * @param label
+ * @param state
+ * @returns {q.promise} 
+ */
+HyperionGraph.prototype.updateNodeState = function(id, label, state) {
+	if(isUndefined(id)) { throw new Error('no id given'); }
+	if(isUndefined(label)) { throw new Error('no label given'); }
+	if(isUndefined(state)) { throw new Error('no state given'); }
+
 	var nodeLabel = label
 		, stateNodeLabel = nodeLabel + 'State'
 		, statements = [{
@@ -46,7 +67,79 @@ HyperionGraph.prototype.updateNode = function(id, label, data) {
 					currentTo: this.time.infinity()
 					, newTo: this.time.now()
 				}
-				, newStateProps: data
+				, newStateProps: state
+			}
+		}];
+
+	return this.executeStatements(statements);
+};
+
+/**
+ * Returns the state for a node with given ID and label. If no timestamp was given, the latest revision of the node is
+ * returned. Pass a date object for timestamp to lookup up the nodes revision which was valid back then.
+ *
+ * @param id
+ * @param label
+ * @param timestamp
+ * @returns {q.promise} 
+ */
+HyperionGraph.prototype.getNodeState = function(id, label, timestamp) {
+	if(isUndefined(id)) { throw new Error('no id given'); }
+	if(isUndefined(label)) { throw new Error('no label given'); }
+
+	var nodeLabel = label
+		, stateNodeLabel = nodeLabel + 'State'
+		, statement = {
+			parameters: {
+				nodeProps: { id: id }
+				, stateRelationshipProps: {}
+			}
+		};
+
+	if(isUndefined(timestamp)) {
+		// Latest:
+		statement.statement =
+			'MATCH (node:`' + nodeLabel + '`{id: {nodeProps}.id})-[:STATE{to:{stateRelationshipProps}.to}]->(state:`' + stateNodeLabel + '`) ' +
+			'RETURN state';
+		statement.parameters.stateRelationshipProps.to = this.time.infinity();
+	} else {
+		// Go back in time:
+		statement.statement =
+			'MATCH (node:`' + nodeLabel + '`{id: {nodeProps}.id})-[stateRelationship:STATE]->(state:`' + stateNodeLabel + '`) ' +
+			'WHERE (stateRelationship.from <= {stateRelationshipProps}.from AND stateRelationship.to > {stateRelationshipProps}.to) ' +
+			'RETURN state';
+		statement.parameters.stateRelationshipProps.from = timestamp.getTime();
+		statement.parameters.stateRelationshipProps.to = statement.parameters.stateRelationshipProps.from;
+	}
+
+	return this.executeStatementsSerially([statement])
+		.then(function(results) {
+			var state = results.data[0];
+			return q.when(state);
+		});
+};
+
+/**
+ * Deletes a node with given id and label.
+ *
+ * @param id
+ * @param label
+ * @returns {q.promise} 
+ */
+HyperionGraph.prototype.deleteNode = function(id, label) {
+	if(isUndefined(id)) { throw new Error('no id given'); }
+	if(isUndefined(label)) { throw new Error('no label given'); }
+
+	var nodeLabel = label
+		, stateNodeLabel = nodeLabel + 'State'
+		, statements = [{
+			statement:	'MATCH (node:`' + nodeLabel + '`{id: {nodeProps}.id})-[stateRelationship:STATE{to: {stateRelationshipProps}.currentTo}]->(:`' + stateNodeLabel + '`) SET stateRelationship.to = {stateRelationshipProps}.newTo'
+			, parameters: {
+				nodeProps: { id: id }
+				, stateRelationshipProps: {
+					currentTo: this.time.infinity()
+					, newTo: this.time.now()
+				}
 			}
 		}];
 

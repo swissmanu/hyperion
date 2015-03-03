@@ -23,6 +23,7 @@
   },
   "homepage": "https://github.com/swissmanu/hyperion-graph",
   "dependencies": {
+    "amp-is-undefined": "^1.0.1",
     "q": "^1.1.2"
   },
   "peerDependencies": {
